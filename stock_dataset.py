@@ -51,3 +51,4 @@ class StockDataset(Dataset):
 #     print(f"Input shape: {inputs.shape}")   # torch.Size([32, 10, 1500])
 #     print(f"Target shape: {targets.shape}") # torch.Size([32])
 #     break
+
