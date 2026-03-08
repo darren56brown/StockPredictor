@@ -28,51 +28,67 @@ def load_checkpoint(path, model, optimizer=None, device='cpu'):
     return checkpoint['epoch']
 
 def get_available_tickers(directory):
-    """Parses the Processed directory to find all unique tickers."""
-    files = [f for f in os.listdir(directory) if f.endswith('_PROD.parquet')]
-    return [f.split('_')[0].upper() for f in files]
+    """Finds all tickers based on .parquet filenames, handling multiple separators."""
+    if not os.path.exists(directory):
+        return []
+    files = [f for f in os.listdir(directory) if f.endswith('.parquet')]
+    # Extracts 'TSLA' from 'TSLA.parquet' or 'TSLA_anything.parquet'
+    tickers = [f.replace('.', '_').split('_')[0].upper() for f in files]
+    return sorted(list(set(tickers)))
 
 def train():
     # 1. Device Detection (Pi 5 vs Linux GPU)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"System: Running on {device}")
 
-    # 2. Define Ticker Split (Whitelisting for Test)
+    # 2. Directory and Ticker Validation
     processed_dir = '../StockData/Processed'
     if not os.path.exists(processed_dir):
-        print(f"Error: {processed_dir} directory not found.")
-        return
+        print(f"EXIT: Directory '{processed_dir}' not found. Run your processing script first.")
+        sys.exit(1)
 
     all_tickers = get_available_tickers(processed_dir)
+    if not all_tickers:
+        print(f"EXIT: No .parquet files found in {processed_dir}")
+        sys.exit(1)
     
-    # --- EDIT YOUR TEST TICKERS HERE ---
-    test_tickers = ['TSLA', 'W', 'ORLY'] # Model will NEVER see these during training
+    # 3. Define Ticker Split
+    # Whitelist these for testing; all others will be used for training
+    test_tickers = ['TSLA', 'W', 'ORLY'] 
     train_tickers = [t for t in all_tickers if t not in test_tickers]
     
+    if not train_tickers:
+        print("EXIT: No tickers left for training after test split.")
+        sys.exit(1)
+
     print(f"Training on: {train_tickers}")
     print(f"Testing on:  {test_tickers}")
 
-    # 3. Create Datasets
+    # 4. Load Datasets
     train_ds = StockDirectoryDataset(processed_dir, seq_length=1500, whitelist=train_tickers)
     test_ds = StockDirectoryDataset(processed_dir, seq_length=1500, whitelist=test_tickers)
+
+    if len(train_ds) == 0:
+        print("EXIT: Training dataset contains 0 windows. Check sequence length vs file size.")
+        sys.exit(1)
 
     train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_ds, batch_size=32, shuffle=False)
 
-    # 4. Initialize Model
+    # 5. Initialize Model
     model = StockCNN(num_channels=10, seq_length=1500).to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.MSELoss()
 
-    # 5. Resume from Checkpoint
+    # 6. Resume from Checkpoint
     checkpoint_path = "model_checkpoint.pth"
     start_epoch = 0
     if os.path.exists(checkpoint_path):
         start_epoch = load_checkpoint(checkpoint_path, model, optimizer, device)
 
-    # 6. Training Loop
+    # 7. Training Loop
     num_epochs = 10
-    print(f"Starting training for {num_epochs} epochs...")
+    print(f"Starting training for {num_epochs} additional epochs...")
 
     for epoch in range(start_epoch, start_epoch + num_epochs):
         model.train()
@@ -80,6 +96,7 @@ def train():
         
         for inputs, targets in train_loader:
             inputs = inputs.to(device)
+            # targets cast to device and reshaped; dtype is handled by dataset
             targets = targets.to(device).unsqueeze(1)
             
             optimizer.zero_grad()
@@ -90,7 +107,7 @@ def train():
             
             running_loss += loss.item()
 
-        # Validation Step (Out-of-Sample Test)
+        # Validation Step
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
