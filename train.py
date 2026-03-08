@@ -7,7 +7,7 @@ import sys
 
 # Import your custom classes
 from stock_dataset import StockDirectoryDataset
-from stock_cnn import StockCNN
+from stock_cnn import LightStockCNN as CNNModel
 
 def save_checkpoint(model, optimizer, epoch, path="model_checkpoint.pth"):
     """Saves the model weights and optimizer state."""
@@ -76,7 +76,7 @@ def train():
     test_loader = DataLoader(test_ds, batch_size=32, shuffle=False)
 
     # 5. Initialize Model
-    model = StockCNN(num_channels=10, seq_length=1500).to(device)
+    model = CNNModel(num_channels=10, seq_length=1500).to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.MSELoss()
 

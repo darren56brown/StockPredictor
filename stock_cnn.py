@@ -37,3 +37,38 @@ class StockCNN(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
         return x
+
+############################
+############################
+
+class LightStockCNN(nn.Module):
+    def __init__(self, num_channels=10, seq_length=1500):
+        super(LightStockCNN, self).__init__()
+        
+        # Layer 1: Capture short-term patterns (5-tick window)
+        self.conv1 = nn.Conv1d(num_channels, 32, kernel_size=5, padding=2)
+        
+        # Layer 2: Refine patterns
+        self.conv2 = nn.Conv1d(32, 64, kernel_size=3, padding=1)
+        
+        self.pool = nn.MaxPool1d(kernel_size=2)
+        
+        # After two poolings: 1500 → 750 → 375
+        self.flatten_size = 64 * (seq_length // 4)
+        
+        self.fc1 = nn.Linear(self.flatten_size, 128)
+        self.fc2 = nn.Linear(128, 1)
+
+    def forward(self, x):
+        # Conv → ReLU → Pool
+        x = self.pool(F.relu(self.conv1(x)))
+        # Conv → ReLU → Pool
+        x = self.pool(F.relu(self.conv2(x)))
+        
+        x = x.view(x.size(0), -1)
+        
+        # Dense head (no dropout)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        
+        return x
