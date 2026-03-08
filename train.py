@@ -135,7 +135,7 @@ def train():
         
         print(f"==> Epoch [{epoch+1}] Complete | Train Loss: {avg_train_loss:.6f} | Val Loss: {avg_val_loss:.6f}")
         
-        save_checkpoint(model, optimizer, epoch + 1, checkpoint_path)
+        save_checkpoint(model, optimizer, epoch + 1, f"checkpoint_epoch_{epoch+1}.pth")
 
 if __name__ == "__main__":
     train()
