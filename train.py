@@ -93,10 +93,13 @@ def train():
     for epoch in range(start_epoch, start_epoch + num_epochs):
         model.train()
         running_loss = 0.0
+        total_batches = len(train_loader)
         
-        for inputs, targets in train_loader:
+        import time
+        start_time = time.time()
+
+        for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs = inputs.to(device)
-            # targets cast to device and reshaped; dtype is handled by dataset
             targets = targets.to(device).unsqueeze(1)
             
             optimizer.zero_grad()
@@ -106,6 +109,16 @@ def train():
             optimizer.step()
             
             running_loss += loss.item()
+
+            # --- PI PROGRESS FEEDBACK ---
+            if (batch_idx + 1) % 10 == 0 or (batch_idx + 1) == total_batches:
+                elapsed = time.time() - start_time
+                batches_per_sec = (batch_idx + 1) / elapsed
+                print(f"Epoch [{epoch+1}] Batch [{batch_idx+1}/{total_batches}] "
+                      f"Loss: {loss.item():.6f} ({batches_per_sec:.2f} batch/s)", end='\r')
+
+        # Clear the progress line for the final epoch summary
+        print("") 
 
         # Validation Step
         model.eval()
@@ -117,11 +130,10 @@ def train():
                 outputs = model(inputs)
                 val_loss += criterion(outputs, targets).item()
 
-        avg_train_loss = running_loss / len(train_loader)
+        avg_train_loss = running_loss / total_batches
         avg_val_loss = val_loss / len(test_loader)
         
-        print(f"Epoch [{epoch+1}/{start_epoch + num_epochs}] "
-              f"Train Loss: {avg_train_loss:.6f} | Val Loss: {avg_val_loss:.6f}")
+        print(f"==> Epoch [{epoch+1}] Complete | Train Loss: {avg_train_loss:.6f} | Val Loss: {avg_val_loss:.6f}")
         
         save_checkpoint(model, optimizer, epoch + 1, checkpoint_path)
 
