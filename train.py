@@ -68,7 +68,7 @@ def train():
         start_epoch = load_checkpoint(checkpoint_path, model, optimizer, device)
 
     # 7. Training Loop
-    num_epochs = 10
+    num_epochs = 100
     print(f"Starting training from epoch {start_epoch}...")
 
     for epoch in range(start_epoch, start_epoch + num_epochs):
