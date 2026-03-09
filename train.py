@@ -8,7 +8,8 @@ import time
 
 # Import your custom classes
 from stock_dataset import StockDirectoryDataset
-from stock_cnn import LightStockCNN as CNNModel
+#from stock_cnn import LightStockCNN as CNNModel
+from stock_cnn import StockCNN as CNNModel
 
 def save_checkpoint(model, optimizer, epoch, path="model_checkpoint.pth"):
     torch.save({
