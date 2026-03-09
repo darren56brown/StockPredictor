@@ -13,7 +13,7 @@ STEPS_TO_PREDICT = 50
 PREVIOUS_STEPS_TO_ECHO = 50
 MODEL_PATH = "model_checkpoint.pth"
 PROCESSED_DIR = "./Processed"
-RAW_DIR = "./Raw" 
+RAW_DIR = "../StockData/Raw" 
 OUTPUT_CSV = f"{TICKER}_inference.csv"
 
 from stock_cnn import StockCNN as CNNModel
