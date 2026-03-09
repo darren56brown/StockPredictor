@@ -42,7 +42,7 @@ def train():
     print(f"System: Running on {device}")
 
     # 2. Directory and Ticker Validation
-    processed_dir = '../StockData/Processed'
+    processed_dir = './Processed'
     if not os.path.exists(processed_dir):
         print(f"EXIT: Directory '{processed_dir}' not found. Run your processing script first.")
         sys.exit(1)
