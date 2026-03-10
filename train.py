@@ -72,7 +72,7 @@ def train():
     target_mask = [i for i in range(11) if i != time_idx]
 
     # 5. Training Loop
-    num_epochs = 100
+    num_epochs = 1000
     print(f"Starting training from epoch {start_epoch}...")
 
     for epoch in range(start_epoch, start_epoch + num_epochs):
